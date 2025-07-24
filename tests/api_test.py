@@ -11,7 +11,7 @@ import time
 from typing import Dict, List, Any
 
 # API Configuration
-API_ENDPOINT = "https://cplwnagvi0.execute-api.eu-west-1.amazonaws.com/v1/extract"
+API_ENDPOINT = "https://mch0iwssbk.execute-api.eu-west-1.amazonaws.com/v1/extract"
 TIMEOUT = 30
 
 class Colors:
