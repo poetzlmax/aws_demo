@@ -1,2 +1,58 @@
+# AWS CLI installation files
 awscliv2.zip
 aws/
+
+# Python installation files
+get-pip.py
+
+# Lambda deployment packages (generated during build)
+*.zip
+lambda-code.zip
+api-code.zip
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Lambda package dependencies (generated during build)
+lambda/package/
+
+# Environment files (if any are created)
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+
+# Node modules (if any)
+node_modules/
+
+# AWS credentials (safety)
+.aws/
+credentials
+
+# Build outputs
+dist/
+build/
