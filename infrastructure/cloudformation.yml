@@ -1,0 +1,125 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Simple Text Name Extractor API - Clean Version'
+
+Parameters:
+  OpenAIAPIKey:
+    Type: String
+    Description: OpenAI API Key
+    NoEcho: true
+
+Resources:
+  # Lambda execution role
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # Lambda function - will be updated with separate code deployment
+  NameExtractorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: SimpleNameExtractor
+      Runtime: python3.12
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt LambdaRole.Arn
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Placeholder - update with actual code'}
+      Environment:
+        Variables:
+          OPENAI_API_KEY: !Ref OpenAIAPIKey
+      Timeout: 30
+
+  # API Gateway
+  TextAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: SimpleNameExtractorAPI
+      Description: Simple API to extract names from text
+
+  # API Gateway resource
+  ExtractResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TextAPI
+      ParentId: !GetAtt TextAPI.RootResourceId
+      PathPart: extract
+
+  # CORS OPTIONS method
+  ExtractOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TextAPI
+      ResourceId: !Ref ExtractResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+
+  # POST method
+  ExtractPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TextAPI
+      ResourceId: !Ref ExtractResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${NameExtractorFunction.Arn}/invocations'
+
+  # Lambda permission
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref NameExtractorFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TextAPI}/*/POST/extract"
+
+  # API deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - ExtractPostMethod
+      - ExtractOptionsMethod
+    Properties:
+      RestApiId: !Ref TextAPI
+      StageName: v1
+
+Outputs:
+  APIEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${TextAPI}.execute-api.${AWS::Region}.amazonaws.com/v1/extract"
+    Export:
+      Name: !Sub "${AWS::StackName}-APIEndpoint"
+  
+  LambdaFunctionName:
+    Description: Lambda function name for code updates
+    Value: !Ref NameExtractorFunction
