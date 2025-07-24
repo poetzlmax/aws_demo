@@ -41,10 +41,6 @@ Resources:
                   - !Sub '${InputBucket.Arn}/*'
                   - !Sub '${OutputBucket.Arn}/*'
               - Effect: Allow
-                Action: 
-                  - secretsmanager:GetSecretValue
-                Resource: '*'
-              - Effect: Allow
                 Action: logs:*
                 Resource: 'arn:aws:logs:*:*:*'
 
@@ -59,8 +55,9 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
+          INPUT_BUCKET: !Ref InputBucket
           OUTPUT_BUCKET: !Ref OutputBucket
-          OPENAI_SECRET_NAME: openai/api/key
+          OPENAI_API_KEY: !Ref OpenAIAPIKey
       Code:
         S3Bucket: !Ref InputBucket
         S3Key: lambda-code.zip
@@ -72,21 +69,6 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: s3.amazonaws.com
       SourceArn: !GetAtt InputBucket.Arn
-
-  BucketNotification:
-    Type: AWS::S3::BucketNotification
-    Properties:
-      Bucket: !Ref InputBucket
-      NotificationConfiguration:
-        LambdaConfigurations:
-          - Event: 's3:ObjectCreated:*'
-            Function: !GetAtt LambdaFunction.Arn
-
-  OpenAISecret:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Name: openai/api/key
-      SecretString: !Ref OpenAIAPIKey
 
   ApiLambdaFunction:
     Type: AWS::Lambda::Function
@@ -101,6 +83,7 @@ Resources:
         Variables:
           INPUT_BUCKET: !Ref InputBucket
           OUTPUT_BUCKET: !Ref OutputBucket
+          OPENAI_API_KEY: !Ref OpenAIAPIKey
       Code:
         S3Bucket: !Ref InputBucket
         S3Key: api-code.zip
@@ -152,18 +135,6 @@ Resources:
     Properties:
       WebsiteConfiguration:
         IndexDocument: index.html
-
-  WebBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref WebBucket
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal: '*'
-            Action: s3:GetObject
-            Resource: !Sub '${WebBucket.Arn}/*'
 
 Outputs:
   ApiEndpoint:
