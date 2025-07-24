@@ -6,17 +6,40 @@ Parameters:
     Type: String
     NoEcho: true
     Description: Dein OpenAI API Key
+  DeploymentBucketName:
+    Type: String
+    Description: Name of the deployment bucket for Lambda code
 
 Resources:
   InputBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub 'openai-image-input-${AWS::AccountId}-${AWS::Region}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteUploadsAfter1Day
+            Status: Enabled
+            ExpirationInDays: 1
 
   OutputBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub 'openai-image-output-${AWS::AccountId}-${AWS::Region}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteResultsAfter7Days
+            Status: Enabled
+            ExpirationInDays: 7
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -40,6 +63,7 @@ Resources:
                 Resource: 
                   - !Sub '${InputBucket.Arn}/*'
                   - !Sub '${OutputBucket.Arn}/*'
+                  - !Sub 'arn:aws:s3:::${DeploymentBucketName}/*'
               - Effect: Allow
                 Action: logs:*
                 Resource: 'arn:aws:logs:*:*:*'
@@ -59,7 +83,7 @@ Resources:
           OUTPUT_BUCKET: !Ref OutputBucket
           OPENAI_API_KEY: !Ref OpenAIAPIKey
       Code:
-        S3Bucket: !Ref InputBucket
+        S3Bucket: !Ref DeploymentBucketName
         S3Key: lambda-code.zip
 
   LambdaInvokePermission:
@@ -85,7 +109,7 @@ Resources:
           OUTPUT_BUCKET: !Ref OutputBucket
           OPENAI_API_KEY: !Ref OpenAIAPIKey
       Code:
-        S3Bucket: !Ref InputBucket
+        S3Bucket: !Ref DeploymentBucketName
         S3Key: api-code.zip
 
   ApiLambdaPermission:
@@ -133,13 +157,24 @@ Resources:
   WebBucket:
     Type: AWS::S3::Bucket
     Properties:
-      WebsiteConfiguration:
-        IndexDocument: index.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteWebFilesAfter7Days
+            Status: Enabled
+            ExpirationInDays: 7
 
 Outputs:
   ApiEndpoint:
     Value: !Sub 'https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com'
     Description: API Endpoint URL
-  WebsiteURL:
-    Value: !GetAtt WebBucket.WebsiteURL
-    Description: URL der Weboberfläche
+  InputBucketName:
+    Value: !Ref InputBucket
+    Description: Private S3 bucket for image uploads (API access only)
+  OutputBucketName:
+    Value: !Ref OutputBucket
+    Description: Private S3 bucket for processed results (API access only)
