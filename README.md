@@ -2,6 +2,13 @@
 
 A serverless AWS API that extracts person names from text using OpenAI GPT-4.
 
+## 🚀 **DEPLOYED & LIVE** ✅
+
+**API Endpoint:** `https://ewt4ntj2r6.execute-api.eu-west-1.amazonaws.com/v1/extract`  
+**Status:** Production Ready  
+**Stack:** simple-name-extractor (eu-west-1)  
+**Deployed:** July 28, 2025
+
 ## Architecture
 
 - **AWS Lambda**: Python 3.12 runtime for text processing
@@ -12,7 +19,7 @@ A serverless AWS API that extracts person names from text using OpenAI GPT-4.
 ## API Endpoint
 
 ```
-POST https://cplwnagvi0.execute-api.eu-west-1.amazonaws.com/v1/extract
+POST https://ewt4ntj2r6.execute-api.eu-west-1.amazonaws.com/v1/extract
 ```
 
 ### Request Format
@@ -34,9 +41,14 @@ POST https://cplwnagvi0.execute-api.eu-west-1.amazonaws.com/v1/extract
 ## Quick Test
 
 ```bash
-curl -X POST https://cplwnagvi0.execute-api.eu-west-1.amazonaws.com/v1/extract 
-  -H "Content-Type: application/json" 
+curl -X POST https://ewt4ntj2r6.execute-api.eu-west-1.amazonaws.com/v1/extract \
+  -H "Content-Type: application/json" \
   -d '{"text": "Hello John Smith and Mary Johnson"}'
+```
+
+**Expected Response:**
+```json
+{"names": ["John Smith", "Mary Johnson"], "original_text": "Hello John Smith and Mary Johnson", "count": 2}
 ```
 
 ## Project Structure
@@ -100,11 +112,26 @@ The API handles various error scenarios:
 
 **Total: ~$0.0015 per request**
 
+## Deployment Status ✅
+
+**Current Deployment:**
+- **Stack Name:** simple-name-extractor
+- **Region:** eu-west-1 (Ireland)  
+- **Status:** CREATE_COMPLETE
+- **Lambda Function:** SimpleNameExtractor
+- **Deployed:** July 28, 2025 07:34 UTC
+
+**Resources Created:**
+- AWS Lambda Function (Python 3.12)
+- API Gateway REST API
+- IAM Execution Role
+- CloudFormation Stack
+
 ## Monitoring
 
 View logs in CloudWatch:
 ```bash
-aws logs tail /aws/lambda/SimpleNameExtractor --follow
+aws logs tail /aws/lambda/SimpleNameExtractor --follow --region eu-west-1
 ```
 
 ## Security
@@ -116,27 +143,3 @@ aws logs tail /aws/lambda/SimpleNameExtractor --follow
 ## Support
 
 For issues or questions, check the CloudWatch logs or test with the provided test scripts.
-
-Diese Demo automatisiert die Analyse und Informations-Extraktion aus Bildern mithilfe von AWS Lambda, OpenAI und Amazon S3.
-
-## Architektur
-
-- **Amazon S3**: Speicherung der Bilder, Ergebnisse und der kleinen Weboberfläche
-- **AWS Lambda**: Bildverarbeitung und API-Endpunkt
-- **API Gateway**: HTTP-API für Upload und Ergebnisausgabe
-- **OpenAI API**: Bildanalyse und Informations-Extraktion
-- **AWS Secrets Manager**: Sicherer Speicher für den OpenAI API Key
-
-## Deployment
-
-1. AWS CLI konfigurieren
-2. OpenAI API Key beim Ausführen des Skripts angeben und Deployment starten:
-   ```bash
-   ./scripts/deploy.sh
-   ```
-   Das Skript paketiert die Lambda-Funktionen und deployed den CloudFormation-Stack.
-   Nach erfolgreichem Deploy wird die API-Endpunkt-URL ausgegeben.
-
-## Nutzung
-
-Die minimale Weboberfläche befindet sich in `web/index.html`. Dort die Platzhalter-URL `REPLACE_WITH_API_ENDPOINT` durch die ausgegebene API-URL ersetzen und die Datei im Browser öffnen. Ein Bild kann anschließend hochgeladen werden und nach der Verarbeitung erscheint das JSON-Ergebnis auf der Seite.
